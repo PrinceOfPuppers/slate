@@ -2,4 +2,4 @@ From python:3
 
 ADD serverMain.py /
 
-CMD ["python","./serverMain.py"]
+RUN "python serverMain.py"
