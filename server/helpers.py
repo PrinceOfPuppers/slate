@@ -1,6 +1,8 @@
 import socket
 from time import sleep
 import marshal
+import csv
+import re
 from urllib.request import urlopen
 
 import server.config as cfg
@@ -36,29 +38,24 @@ def startServer():
             internalIp = socket.gethostbyname(socket.gethostname())
 
             s.bind(("", cfg.port))
-            print(f"Server Started with external IP: {externalIp}, internal IP {internalIp}, and port: {cfg.port}")
+            print(f"Server Started with external IP: {externalIp}, internal IP {internalIp}, and port: {cfg.port}\n")
             s.listen(cfg.queueLen)
-            return s
+            return s,externalIp,internalIp
         except:
             sleep(1)
 
 
-#server packet formatting 
-# eot - bool notifying server is closing
-# username - username of messanger
-# message - text to be displaied
-def sendPacket(sock,eot,userListFlag,username,message):
-    packet = marshal.dumps( (eot, userListFlag,
-                        bytes(username,cfg.encoding),
-                        bytes(message,cfg.encoding)) )
+#returns list of inputs 
+def sanitizeInput(inputStr):
+    inputStr.strip()
 
-    sock.send(packet)
+    #removes multiple spaces
+    inputStr = re.sub(" +", " ",inputStr)
 
-def getPacket(sock):
-    packet = sock.recv(cfg.bufferSize)
-    eot,Text = marshal.loads(packet)
-    Text = Text.decode(cfg.encoding)
+    inputList = [ str(x) for x in list(csv.reader([inputStr], delimiter=' ', quotechar='"'))[0] ]
 
-    return eot,Text
+    for i,val in enumerate(inputList):
+        inputList[i]=val.replace('"',"")
+        inputList[i]=val.replace("'","")
 
-
+    return inputList

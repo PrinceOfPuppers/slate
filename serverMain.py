@@ -5,6 +5,7 @@ from queue import Queue
 from server.server import Server
 from server.serverShell import loadCommands
 import server.config as cfg
+from server.helpers import sanitizeInput
 
 #run by shell thread
 def pollInputs(inputQueue):
@@ -15,8 +16,8 @@ def pollInputs(inputQueue):
 
 
 
-def parseInput(inStr):
-    inList = inStr.split(" ")
+def parseInput(commandDict,inStr):
+    inList = sanitizeInput(inStr)
     #checks if valid command
     command = inList[0]
     if not command in commandDict:
@@ -26,8 +27,10 @@ def parseInput(inStr):
     #checks if valid numbe of arguments
     command = commandDict[command]
     args = inList[1:]
-    if command.numArgs != len(args):
-        print(f"Invalid Number of Arguments, {inList[0]} Requires {command.numArgs} Arguments\n")
+
+    if len(args) not in command.argRange:
+
+        command.argsErrorPrint(inList[0])
         return
     
     command.funct(*args)
@@ -47,12 +50,12 @@ if __name__ == "__main__":
     while True:
         #database queries can only be excecuted on main thread
         #hence why theyre done here
-        while not serv.db.operationsQueue.empty():
+        while not serv.db.opsQueue.empty():
             serv.db.pushQueue()
 
         while not inputQueue.empty():
             inStr = inputQueue.get()
-            parseInput(inStr)
+            parseInput(commandDict,inStr)
         
         sleep(cfg.sleepTime)
 

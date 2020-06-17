@@ -5,24 +5,35 @@ from packets.packets import PType,sockWrapper
 from server.helpers import startServer, getRoomName
 from server.structures import ClientData
 import server.threads as threads
-from server.messageDatabase import MessageDB
+from server.dbWrapper import DbWrapper
 import server.config as cfg
 
 
 class Server:
     def __init__(self):
-        self.running = True
+        self.running = False
         self.roomName = getRoomName()
-        self.db = MessageDB()
-        
+
+        self.db = DbWrapper()
+        self.bannedIPs = self.db.banTable.getIPs()
 
         self.clients = []
         self.threads=[]
 
+    def __str__(self):
+        servStr = f"Room Name: {self.roomName} "
+        if self.running:
+            servStr += f"With {len(self.clients) } Clients\n"
+            servStr += f"External IP: {self.ip}, Internal IP {self.localIp}, Port: {cfg.port}"
+        else:
+            servStr +="Currently Not Running"
+        
+        return servStr
+
     def start(self):
         self.running = True
         self.nextClientID = 0
-        self.s = startServer()
+        self.s,self.ip,self.localIp = startServer()
         threads.startThreads(self)
 
     def getClientById(self,clientId):
@@ -32,34 +43,59 @@ class Server:
         
         return None
 
+    def banIP(self,ip,reason="None Given"):
+        ip=ip.strip()
+        self.bannedIPs.append(ip)
+        self.db.addToQueue(self.db.banTable.put,(ip,reason))
+
+        for client in self.clients:
+            if client.ip == ip:
+                self.dropClient(client)
+    
+    #must be run on main thread 
+    def removeBan(self,banID):
+        ip = self.db.banTable.popBanID(banID)
+        if ip in self.bannedIPs:
+            self.bannedIPs.remove(ip)
+
     #run on thread
     def awaitConnections(self):
         while self.running:
             sleep(cfg.sleepTime)
             try:
                 clientSocket, addr = self.s.accept()
+                ip = addr[0]
+                #checks if client is banned
+                if ip in self.bannedIPs:
+                    clientSocket.close()
+                    continue
             except:
                 continue
-
             
             sockWrap = sockWrapper(clientSocket,cfg.bufferSize)
 
             #gets userdata
-            sockWrap.listen()
-            _,clientDataDict = sockWrap.get()
+            try:
+                sockWrap.listen()
+                _,clientDataDict = sockWrap.get()
 
-            clientUsername = clientDataDict["username"]
-            clientUsername=self.ensureUniqueUsername(clientUsername)
+                clientUsername = clientDataDict["username"]
+                clientUsername=self.ensureUniqueUsername(clientUsername)
 
-            #updates client data dict with proper user id
-            clientDataDict["id"]=self.nextClientID
-            clientDataDict["username"]=clientUsername
+                #updates client data dict with proper user id
+                clientID = self.nextClientID
+                clientDataDict["id"]= clientID
+                clientDataDict["username"]=clientUsername
 
-            sockWrap.addClientData(clientDataDict)
-            sockWrap.send()
-            
-            sockWrap.addIterations(len(self.clients))
-            sockWrap.send()
+                sockWrap.addClientData(clientDataDict)
+                sockWrap.send()
+
+                sockWrap.addIterations(len(self.clients))
+                sockWrap.send()
+            except:
+                #connection failed in inital setup (likley didnt connect using client)
+                self.db.addToQueue(self.db.connTable.put,(ip,))
+                continue
 
             #sends active users
             for client in self.clients:
@@ -67,12 +103,15 @@ class Server:
                 sockWrap.send()
             
             
-            newClient = ClientData(sockWrap,addr,clientDataDict)
+            newClient = ClientData(sockWrap,ip,clientDataDict)
+
             self.clients.append(newClient)
             message = f"> {clientUsername} Joined {self.roomName}"
 
-            self.db.addToQueue(self.db.put,("Server",-1,message))
-            
+            #logs message and client connection
+            self.db.addToQueue(self.db.msgTable.put,("Server",-1,message))
+            self.db.addToQueue(self.db.connTable.put,(ip,True,clientUsername,clientID))
+
             for client in self.clients:
                 client.sock.addClientData(newClient.dict)
                 client.sock.addMessage(message)
@@ -116,7 +155,7 @@ class Server:
         elif pType == PType.message:
             messangerID, message = data
             username = client.dict["username"]
-            self.db.addToQueue(self.db.put,(username,messangerID,message))
+            self.db.addToQueue(self.db.msgTable.put,(username,messangerID,message))
             for client in self.clients:
                 client.sock.addMessage(message, messangerID,username)
                 
@@ -164,7 +203,7 @@ class Server:
 
     def dropClient(self,client):
         username=client.dict["username"]
-        self.db.addToQueue(self.db.put,("Server",-1,f"{username} Disconnected"))
+        self.db.addToQueue(self.db.msgTable.put,("Server",-1,f"{username} Disconnected"))
 
         clientId = client.dict["id"]
         client.sock.close()
@@ -175,7 +214,7 @@ class Server:
     def close(self):
         if self.running:
             print("Closing...")
-            self.db.addToQueue(self.db.put,("Server",-1,f"Closing"))
+            self.db.addToQueue(self.db.msgTable.put,("Server",-1,f"Closing"))
 
             #sends client eot
             for client in self.clients:

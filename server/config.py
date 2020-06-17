@@ -14,4 +14,4 @@ noNameReplacement="Mr.NoName"
 
 roomNamePath = "server/roomName.txt"
 
-dbPath = "server/messages.db"
+dbPath = "server/server.db"
