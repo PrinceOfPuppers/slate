@@ -19,8 +19,7 @@ serversJsonPath = "client/data/servers.json"
 windowIconPath = "client/data/icon.png"
 windowName="Slate"
 tkinterWinSize="750x400"
-tkinterFont="verdana 11"
-
+tkinterFont=("verdana",11)
 
 messagePadx=10
 messagePady=5

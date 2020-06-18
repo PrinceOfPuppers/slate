@@ -1,5 +1,7 @@
 import tkinter as tk
 import tkinter.scrolledtext as scrolledtext
+from tkinter.font import Font
+
 from time import sleep
 import client.config as cfg
 
@@ -7,6 +9,10 @@ class Gui:
     def __init__(self,enterCallback,closeCallback):
         self.tkRoot = tk.Tk()
         self.tkRoot.iconphoto(False,tk.PhotoImage(file = cfg.windowIconPath))
+        self.tkRoot.option_add( "*font", cfg.tkinterFont)
+
+        #font size in pixles
+        self.fontSize = Font(family = cfg.tkinterFont[0], size = cfg.tkinterFont[1]).measure("A")
 
         self.tkRoot.title(cfg.windowName)
         self.generateTkinterObjs()
@@ -23,7 +29,7 @@ class Gui:
 
     def generateTkinterObjs(self):
         self.tkRoot.geometry(cfg.tkinterWinSize)
-        self.tkRoot.option_add( "*font", cfg.tkinterFont)
+        
         window=tk.Frame(self.tkRoot)
         window.pack(fill='both',expand=True)
         window.configure(background= cfg.colors["SoftBlack"])
@@ -31,18 +37,18 @@ class Gui:
 
         #main chatbox
         messages=scrolledtext.ScrolledText(window)
-        messages.configure(background= cfg.colors["DarkGrey"],foreground=cfg.textColor,borderwidth=0,padx=10,state='disabled')
+        messages.configure(background= cfg.colors["DarkGrey"],foreground=cfg.textColor,borderwidth=0,padx=10,state='disabled',wrap="word")
 
         textVar=tk.StringVar(window)
         textInput=tk.Entry(window,textvariable=textVar)
         textInput.configure(background= cfg.colors["Grey"],foreground=cfg.textColor,borderwidth=cfg.textInputPad,relief=tk.FLAT)
+        
         #binds return key to textEntered
         textInput.bind("<Return>", lambda event: self.textEntered(textVar) )
 
         #clients online panel
         sidePanel=tk.Text(window)
-        sidePanel.configure(background=cfg.colors["SoftBlack"], foreground = cfg.textColor,borderwidth=0,padx=10,pady=5,state='disabled')
-
+        sidePanel.configure(background=cfg.colors["SoftBlack"], foreground = cfg.textColor,borderwidth=0,padx=10,pady=5,state='disabled',wrap="word")
         #configure color tags
         for color in cfg.colors.keys():
             messages.tag_config(color, foreground=cfg.colors[color])
@@ -59,12 +65,12 @@ class Gui:
         self.messages.grid(row=0,sticky = tk.NSEW)
 
         self.textInput.grid(row=1,sticky = 'sew')
-        self.sidePanel.grid(row=0, column=1,sticky='nes',rowspan=2)
+        self.sidePanel.grid(row=0, column=1,sticky='nsew',rowspan=2)
 
         self.window.rowconfigure(0,weight=2)
         #self.window.rowconfigure(1,weight=1)
         self.window.columnconfigure(0,weight=1)
-        self.window.columnconfigure(1,weight=3)
+        self.window.columnconfigure(1,weight=100,minsize=15*self.fontSize)
     
     #formats based on whos speaking
     def addMessage(self,message,clientDict):

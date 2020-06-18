@@ -35,7 +35,7 @@ class Client:
             
         if self.running:
             #server panel must be updated on seperate thread to avoid hanging
-            self.gui.updateSidePanel(["Pinging Servers"],[cfg.subTextColor])
+            self.gui.updateSidePanel(["Pinging Servers..."],[cfg.subTextColor])
             threads.nonDaemon(self.gui.updateServerPanel,(self.servers,self.eventQueue))
             self.connect()
 
