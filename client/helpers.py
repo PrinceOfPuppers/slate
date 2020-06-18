@@ -51,19 +51,19 @@ def getSaved(gui):
         username = gui.prompt("Whats Your Name?")
 
 
-        for i,color in enumerate(cfg.colors):
+        for i,color in enumerate(cfg.clientColors):
             gui.addText(f"{i}: {color}",color)
         
         #loops until valid input
         colorIndex = -1
-        while not (colorIndex in range(0,len(cfg.colors))):
+        while not (colorIndex in range(0,len(cfg.clientColors))):
             colorIndex = gui.prompt("Whats Your Color (Enter Number)")
             try:
                 colorIndex = int(colorIndex)
             except:
                 continue
         
-        color = cfg.colors[colorIndex]
+        color = cfg.clientColors[colorIndex]
 
         userDict = makeClientDataDict(0,username,color)
         json.dump(userDict,file)

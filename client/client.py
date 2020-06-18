@@ -15,7 +15,7 @@ class Client:
     def __init__(self):
         self.running = True
         self.gui = Gui(self.textSubmitted,self.close)
-        self.dict = getSaved(self.gui)
+        
 
         #sorted by id number
         self.clientsDict = {}
@@ -28,10 +28,16 @@ class Client:
 
         self.eventQueue = EventQueue()
 
-        #server panel must be updated on seperate thread to avoid hanging
-        self.gui.updateSidePanel(["Pinging Servers"],[cfg.lightGrey])
-        threads.nonDaemon(self.gui.updateServerPanel,(self.servers,self.eventQueue))
-        self.connect()
+        try:
+            self.dict = getSaved(self.gui)
+        except:
+            self.running = False
+            
+        if self.running:
+            #server panel must be updated on seperate thread to avoid hanging
+            self.gui.updateSidePanel(["Pinging Servers"],[cfg.subTextColor])
+            threads.nonDaemon(self.gui.updateServerPanel,(self.servers,self.eventQueue))
+            self.connect()
 
 
     def reset(self):

@@ -26,27 +26,27 @@ class Gui:
         self.tkRoot.option_add( "*font", cfg.tkinterFont)
         window=tk.Frame(self.tkRoot)
         window.pack(fill='both',expand=True)
-        window.configure(background= cfg.softBlack)
+        window.configure(background= cfg.colors["SoftBlack"])
 
 
         #main chatbox
         messages=scrolledtext.ScrolledText(window)
-        messages.configure(background= cfg.darkGrey,foreground=cfg.defaultTextColor,borderwidth=0,padx=10,state='disabled')
+        messages.configure(background= cfg.colors["DarkGrey"],foreground=cfg.textColor,borderwidth=0,padx=10,state='disabled')
 
         textVar=tk.StringVar(window)
         textInput=tk.Entry(window,textvariable=textVar)
-        textInput.configure(background= cfg.grey,foreground=cfg.defaultTextColor,borderwidth=cfg.textInputPad,relief=tk.FLAT)
+        textInput.configure(background= cfg.colors["Grey"],foreground=cfg.textColor,borderwidth=cfg.textInputPad,relief=tk.FLAT)
         #binds return key to textEntered
         textInput.bind("<Return>", lambda event: self.textEntered(textVar) )
 
         #clients online panel
         sidePanel=tk.Text(window)
-        sidePanel.configure(background=cfg.softBlack, foreground = cfg.defaultTextColor,borderwidth=0,padx=10,pady=5,state='disabled')
+        sidePanel.configure(background=cfg.colors["SoftBlack"], foreground = cfg.textColor,borderwidth=0,padx=10,pady=5,state='disabled')
 
         #configure color tags
-        for color in cfg.colors:
-            messages.tag_config(color, foreground=color)
-            sidePanel.tag_config(color, foreground=color)
+        for color in cfg.colors.keys():
+            messages.tag_config(color, foreground=cfg.colors[color])
+            sidePanel.tag_config(color, foreground=cfg.colors[color])
     
         self.window=window
         self.window.bind()
@@ -87,7 +87,7 @@ class Gui:
 
 
     #username is simply for api compatibility
-    def addText(self,text,color=cfg.defaultTextColor):
+    def addText(self,text,color=cfg.textColor):
         self.lastMessanger=-1
 
         self.messages.configure(state='normal')
@@ -121,7 +121,7 @@ class Gui:
         entries = []
         colors = []
         for n,ip in enumerate(ips):
-            entries.append(f"{names[n]}:\n    {ip}")
+            entries.append(f"{names[n]}:\n{ip}\n")
             colors.append(cfg.onlineColor if isOnline[n] else cfg.offlineColor)
         
 
@@ -143,7 +143,7 @@ class Gui:
             self.sendToClient(text)
 
 
-    def prompt(self,text,eventQueue=None,color=cfg.defaultTextColor):
+    def prompt(self,text,eventQueue=None,color=cfg.textColor):
         self.addText(text,color)
         self.prompting = True
         
