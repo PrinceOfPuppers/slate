@@ -6,7 +6,7 @@ import threading
 
 from client.queues import EventQueue
 from packets.packets import PType, sockWrapper
-from client.helpers import connect, getSaved
+from client.helpers import startSocket, getSaved,serverHistory
 import client.threads as threads
 import client.config as cfg
 from client.gui import Gui
@@ -21,14 +21,19 @@ class Client:
         self.clientsDict = {}
         self.dictLock = threading.Lock()
 
+        self.servers=serverHistory()
+
         self.threadJobs=["recieve","transmit"]
         self.threads={}
 
         self.eventQueue = EventQueue()
 
+        #server panel must be updated on seperate thread to avoid hanging
+        self.gui.updateSidePanel(["Pinging Servers"],[cfg.defaultTextColor])
+        threads.nonDaemon(self.gui.updateServerPanel,(self.servers,self.eventQueue))
         self.connect()
 
-    
+
     def reset(self):
         try:# catch for reset before connection
             self.disconnect()
@@ -49,19 +54,22 @@ class Client:
 
         self.running = True
         
+        threads.nonDaemon(self.gui.updateServerPanel,(self.servers,self.eventQueue))
         self.connect()
 
 
     def connect(self):
         while self.running:
-            ip = self.gui.prompt("What IP Would You Like to Connect to? ")
+            ip = self.gui.prompt("What IP Would You Like to Connect to? ",self.eventQueue)
             if not self.running:
                 break
             try:
 
                 self.gui.addText("Attempting to Connect...")
                 self.gui.tkRoot.update()
-                sock = connect(ip)
+                print("hi")
+                sock = startSocket(ip)
+                print("hello")
                 self.sock = sockWrapper(sock,cfg.bufferSize)
             except:
                 self.gui.addText("Failed To Connect To That IP")
@@ -88,6 +96,13 @@ class Client:
                 #gets other users in chatroom
                 pType,data = self.sock.get(True)
                 self.packetSwitch(pType,data)
+
+            #gets server name
+            pType,data = self.sock.get(True)
+
+            #gets actual ip incase user typed localhost
+            ip = self.sock.sock.getpeername()[0]
+            self.servers.add(ip,data[1])
 
             break
     

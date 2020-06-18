@@ -76,7 +76,7 @@ def loadCommands(server):
         "close": Operation(server.close),
         "info": Operation(lambda: print(server)),
 
-        "clients": Operation(lambda: print("\n".join(client for client in server.clients),"\n") ),
+        "clients": Operation(lambda: print("\n".join(str(client) for client in server.clients),"\n") ),
 
         "msgs": Operation(lambda n=50: print("\n".join(server.db.msgTable.getN(n))+"\n")),
         "numMsgs": Operation(lambda : print(server.db.msgTable.num(),"\n") ),

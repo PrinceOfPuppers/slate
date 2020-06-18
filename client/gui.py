@@ -40,26 +40,26 @@ class Gui:
         textInput.bind("<Return>", lambda event: self.textEntered(textVar) )
 
         #clients online panel
-        clientsPanel=tk.Text(window)
-        clientsPanel.configure(background=cfg.softBlack, foreground = cfg.defaultTextColor,borderwidth=0,padx=10,pady=5,state='disabled')
+        sidePanel=tk.Text(window)
+        sidePanel.configure(background=cfg.softBlack, foreground = cfg.defaultTextColor,borderwidth=0,padx=10,pady=5,state='disabled')
 
         #configure color tags
         for color in cfg.colors:
             messages.tag_config(color, foreground=color)
-            clientsPanel.tag_config(color, foreground=color)
+            sidePanel.tag_config(color, foreground=color)
     
         self.window=window
         self.window.bind()
         self.messages=messages
         self.textInput = textInput
-        self.clientsPanel=clientsPanel
+        self.sidePanel=sidePanel
     
     def makeLayout(self):
 
         self.messages.grid(row=0,sticky = tk.NSEW)
 
         self.textInput.grid(row=1,sticky = 'sew')
-        self.clientsPanel.grid(row=0, column=1,sticky='nes',rowspan=2)
+        self.sidePanel.grid(row=0, column=1,sticky='nes',rowspan=2)
 
         self.window.rowconfigure(0,weight=2)
         #self.window.rowconfigure(1,weight=1)
@@ -97,19 +97,35 @@ class Gui:
         self.messages.see(tk.END)
         self.textInput.focus_force()
         
+    def updateSidePanel(self,entires,colors):
+        self.sidePanel.configure(state='normal')
+        self.sidePanel.delete(1.0,tk.END)
+        for i,text in enumerate(entires):
+            self.sidePanel.insert(tk.END,text+"\n", colors[i])
+        self.sidePanel.configure(state='disabled')
 
-
+    #wrappers for updateSidePanel
     def updateClientsPanel(self,clientsDict,lock):
         lock.acquire()
-        clients = clientsDict.values()
-        self.clientsPanel.configure(state='normal')
-        self.clientsPanel.delete(1.0,tk.END)
-        for client in clients:
-            username = client["username"]
-            color = client["color"]
-            self.clientsPanel.insert(tk.END,username+"\n", color)
-        self.clientsPanel.configure(state='disabled')
+        entries = [client["username"] for client in clientsDict.values()]
+        colors = [client["color"] for client in clientsDict.values()]
         lock.release()
+        self.updateSidePanel(entries,colors)
+    
+
+    #ment to be run on thread due to long socket pinging time
+    #as such it cant update gui and has to create an event
+    def updateServerPanel(self,servers,eventQueue):
+        ips,names,isOnline = servers.getOnline()
+        
+        entries = []
+        colors = []
+        for n,ip in enumerate(ips):
+            entries.append(f"{names[n]}:\n    {ip}")
+            colors.append(cfg.onlineColor if isOnline[n] else cfg.offlineColor)
+        
+
+        eventQueue.addEvent(self.updateSidePanel,(entries,colors))
 
     def textEntered(self,strVar):
         text=strVar.get()
@@ -127,7 +143,7 @@ class Gui:
             self.sendToClient(text)
 
 
-    def prompt(self,text,color=cfg.defaultTextColor):
+    def prompt(self,text,eventQueue=None,color=cfg.defaultTextColor):
         self.addText(text,color)
         self.prompting = True
         
@@ -137,6 +153,11 @@ class Gui:
             sleep(cfg.sleepTime)
             try:
                 self.tkRoot.update()
+
+                #allows main thread to process events while waiting for prompt return
+                if eventQueue:
+                    while not eventQueue.empty():
+                        eventQueue.triggerEvent()
             except:
                 self.prompting=False
                 self.closeClient()

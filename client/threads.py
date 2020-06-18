@@ -12,3 +12,8 @@ def startThreads(client):
     transmitTread.daemon = True
     transmitTread.start()
     client.threads[jobs[1]] = transmitTread
+
+
+def nonDaemon(target,args):
+    t = threading.Thread(target=target,args=args)
+    t.start()

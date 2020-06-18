@@ -13,6 +13,7 @@ connTimeOut=5
 sleepTime=0.01
 
 userJsonPath = "client/user.json"
+serversJsonPath = "client/servers.json"
 
 #frontend
 windowIconPath = "client/icon.png"
@@ -32,3 +33,6 @@ messagePady=5
 textInputPad=5
 
 colors = [defaultTextColor,"firebrick1", "chocolate1", "SpringGreen2", "DeepSkyBlue2", "DarkOrchid1"]
+
+onlineColor = "SpringGreen2"
+offlineColor = "firebrick1"

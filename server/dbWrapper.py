@@ -213,7 +213,7 @@ class connectionsTable:
             if successful:
                 connections[i] += f"client Info: {connec[4]}(ID:{connec[5]})"
             else:
-                connections[i] += f"Connection Failed!"
+                connections[i] += f"Ping or Connection Failure"
         
         connections.reverse()
         return connections

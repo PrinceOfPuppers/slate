@@ -1,8 +1,9 @@
 import socket
-from time import sleep
+from time import sleep,time
+from datetime import timedelta
 
 from packets.packets import PType,sockWrapper
-from server.helpers import startServer, getRoomName
+from server.helpers import startServer, getRoomName,ensureUniqueUsername
 from server.structures import ClientData
 import server.threads as threads
 from server.dbWrapper import DbWrapper
@@ -13,6 +14,8 @@ class Server:
     def __init__(self):
         self.running = False
         self.roomName = getRoomName()
+        #unix time when server was last started
+        self.startTime=0
 
         self.db = DbWrapper()
         self.bannedIPs = self.db.banTable.getIPs()
@@ -21,10 +24,12 @@ class Server:
         self.threads=[]
 
     def __str__(self):
-        servStr = f"Room Name: {self.roomName} "
+        servStr = f"Server is Called {self.roomName} "
         if self.running:
-            servStr += f"With {len(self.clients) } Clients\n"
-            servStr += f"External IP: {self.ip}, Internal IP {self.localIp}, Port: {cfg.port}"
+            servStr += f"and has {len(self.clients) } Clients Connected\n"
+            servStr += f"it Has Been Running For {timedelta(seconds = round(time() - self.startTime)) }\n"
+            servStr += f"External IP: {self.ip}, Internal IP {self.localIp}, Port: {cfg.port}\n"
+            
         else:
             servStr +="Currently Not Running"
         
@@ -32,6 +37,7 @@ class Server:
 
     def start(self):
         self.running = True
+        self.startTime = round(time())
         self.nextClientID = 0
         self.s,self.ip,self.localIp = startServer()
         threads.startThreads(self)
@@ -80,7 +86,7 @@ class Server:
                 _,clientDataDict = sockWrap.get()
 
                 clientUsername = clientDataDict["username"]
-                clientUsername=self.ensureUniqueUsername(clientUsername)
+                clientUsername=ensureUniqueUsername(clientUsername,self.roomName,self.clients)
 
                 #updates client data dict with proper user id
                 clientID = self.nextClientID
@@ -102,6 +108,8 @@ class Server:
                 sockWrap.addClientData(client.dict)
                 sockWrap.send()
             
+            #sends server name
+            sockWrap.addMessage(self.roomName)
             
             newClient = ClientData(sockWrap,ip,clientDataDict)
 
@@ -119,33 +127,6 @@ class Server:
             client.sock.sock.settimeout(cfg.waitTime)
             self.nextClientID+=1
             
-    #if 2 users have the same username, one joining is given a suffix
-    def ensureUniqueUsername(self,username):
-        #prevent no name
-        if username == "":
-            username = cfg.noNameReplacement
-
-        #prevent server name
-        elif username == self.roomName:
-            suffix = 1
-
-        #prevent duplicate name
-        else:
-            suffix=""
-        i=0
-        while i < len(self.clients):
-            clientName = self.clients[i].dict["username"]
-            if username+str(suffix) == clientName:
-                if suffix=="":
-                    suffix=1
-                else:
-                    suffix+=1
-
-                i=0
-            else:
-                i+=1
-
-        return username+str(suffix)
 
     #client index is for eot transmission so this method knows who disconnected
     def packetSwitch(self,pType,data,client=None):
@@ -212,31 +193,33 @@ class Server:
             otherClients.sock.addClientDisconnect(clientId,username)
     
     def close(self):
-        if self.running:
-            print("Closing...")
-            self.db.addToQueue(self.db.msgTable.put,("Server",-1,f"Closing"))
-
-            #sends client eot
-            for client in self.clients:
-                client.lock.acquire()
-                client.sock.addEot()
-                while not client.sock.outEmpty():
-                    try:
-                        client.sock.send()
-                    except:
-                        break
-                client.lock.release()
-
-            #closes socket and removes client
-            for client in self.clients:
-                self.dropClient(client)
-
-            self.running = False
-
-            self.threads.clear()
-            self.clients.clear()
-            self.s.close()
-            print("Server Closed\n")
-
-        else:
+        if not self.running:
             print("Server Not Started\n")
+            return
+        
+
+        print("Closing...")
+        self.db.addToQueue(self.db.msgTable.put,("Server",-1,f"Closing"))
+
+        #sends client eot
+        for client in self.clients:
+            client.lock.acquire()
+            client.sock.addEot()
+            while not client.sock.outEmpty():
+                try:
+                    client.sock.send()
+                except:
+                    break
+            client.lock.release()
+
+        #closes socket and removes client
+        for client in self.clients:
+            self.dropClient(client)
+
+        self.running = False
+
+        self.threads.clear()
+        self.clients.clear()
+        self.s.close()
+        print("Server Closed\n")
+        

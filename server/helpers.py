@@ -4,7 +4,6 @@ import marshal
 import csv
 import re
 from urllib.request import urlopen
-
 import server.config as cfg
 
 def getRoomName():
@@ -24,6 +23,34 @@ def getRoomName():
     print(f"Server Name: {name}")
     return name
 
+
+#if 2 users have the same username, one joining is given a suffix
+def ensureUniqueUsername(username,roomName,clients):
+    #prevent no name
+    if username == "":
+        username = cfg.noNameReplacement
+
+    #prevent server name
+    elif username == roomName:
+        suffix = 1
+
+    #prevent duplicate name
+    else:
+        suffix=""
+    i=0
+    while i < len(clients):
+        clientName = clients[i].dict["username"]
+        if username+str(suffix) == clientName:
+            if suffix=="":
+                suffix=1
+            else:
+                suffix+=1
+
+            i=0
+        else:
+            i+=1
+
+    return username+str(suffix)
 
 #-------------------#
 #  Socket Wrappers  #

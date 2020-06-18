@@ -1,6 +1,7 @@
 server/roomName.txt
 server/server.db
 client/user.json
+client/servers.json
 server/__pycache__
 packets/__pycache__
 client/__pycache__
