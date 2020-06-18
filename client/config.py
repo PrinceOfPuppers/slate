@@ -32,7 +32,8 @@ messagePady=5
 
 textInputPad=5
 
-colors = [defaultTextColor,"firebrick1", "chocolate1", "SpringGreen2", "DeepSkyBlue2", "DarkOrchid1"]
+#used in text tagging system
+colors = [defaultTextColor,lightGrey,"firebrick1", "chocolate1", "SpringGreen2", "DeepSkyBlue2", "DarkOrchid1"]
 
 onlineColor = "SpringGreen2"
 offlineColor = "firebrick1"

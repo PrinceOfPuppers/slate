@@ -6,7 +6,7 @@ import threading
 
 from client.queues import EventQueue
 from packets.packets import PType, sockWrapper
-from client.helpers import startSocket, getSaved,serverHistory
+from client.helpers import startSocket, getSaved,serverHistory,getIpFromStr
 import client.threads as threads
 import client.config as cfg
 from client.gui import Gui
@@ -29,7 +29,7 @@ class Client:
         self.eventQueue = EventQueue()
 
         #server panel must be updated on seperate thread to avoid hanging
-        self.gui.updateSidePanel(["Pinging Servers"],[cfg.defaultTextColor])
+        self.gui.updateSidePanel(["Pinging Servers"],[cfg.lightGrey])
         threads.nonDaemon(self.gui.updateServerPanel,(self.servers,self.eventQueue))
         self.connect()
 
@@ -60,16 +60,15 @@ class Client:
 
     def connect(self):
         while self.running:
-            ip = self.gui.prompt("What IP Would You Like to Connect to? ",self.eventQueue)
+            inStr = self.gui.prompt("What IP Would You Like to Connect to? ",self.eventQueue)
+            ip = getIpFromStr(self.servers.dict,inStr)
             if not self.running:
                 break
             try:
 
                 self.gui.addText("Attempting to Connect...")
                 self.gui.tkRoot.update()
-                print("hi")
                 sock = startSocket(ip)
-                print("hello")
                 self.sock = sockWrapper(sock,cfg.bufferSize)
             except:
                 self.gui.addText("Failed To Connect To That IP")

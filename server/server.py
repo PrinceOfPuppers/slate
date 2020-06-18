@@ -3,7 +3,7 @@ from time import sleep,time
 from datetime import timedelta
 
 from packets.packets import PType,sockWrapper
-from server.helpers import startServer, getRoomName,ensureUniqueUsername
+from server.helpers import startServer, saveRoomName,getRoomName,ensureUniqueUsername
 from server.structures import ClientData
 import server.threads as threads
 from server.dbWrapper import DbWrapper
@@ -31,9 +31,11 @@ class Server:
             servStr += f"External IP: {self.ip}, Internal IP {self.localIp}, Port: {cfg.port}\n"
             
         else:
-            servStr +="Currently Not Running"
+            servStr +="and is Currently Not Running\n"
         
         return servStr
+
+
 
     def start(self):
         self.running = True
@@ -41,6 +43,10 @@ class Server:
         self.nextClientID = 0
         self.s,self.ip,self.localIp = startServer()
         threads.startThreads(self)
+
+    def setRoomName(self,name):
+        self.roomName = name
+        saveRoomName(name)
 
     def getClientById(self,clientId):
         for client in self.clients:

@@ -9,25 +9,25 @@ class serverHistory:
     def __init__(self):
         try:
             file = open(cfg.serversJsonPath, 'r')
-            self.servers = json.load(file)
+            self.dict = json.load(file)
 
         except:
             file = open(cfg.serversJsonPath, 'w')
-            self.servers = {}
+            self.dict = {}
         file.close()
 
     def add(self,ip,name):
-        self.servers[ip] = name
+        self.dict[ip] = name
 
         file = open(cfg.serversJsonPath, 'w')
-        json.dump(self.servers,file)
+        json.dump(self.dict,file)
     
 
     def getOnline(self):
-        ips = [ip for ip in self.servers.keys()]
-        names = [self.servers[ip] for ip in ips]
+        ips = [ip for ip in self.dict.keys()]
+        names = [self.dict[ip] for ip in ips]
         isOnline = []
-        for ip in self.servers.keys():
+        for ip in self.dict.keys():
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             s.settimeout(1)
             if s.connect_ex((ip,cfg.port)) == 0:
@@ -69,6 +69,21 @@ def getSaved(gui):
         json.dump(userDict,file)
 
     return userDict
+
+#used to get ip from user input (allows user to type room name instead of ip)
+def getIpFromStr(serversDict,inStr):
+    inStr.strip()
+    inStr = inStr.lower()
+
+    if inStr=="localhost":
+        return "127.0.0.1"
+
+    for ip in serversDict.keys():
+        if inStr == serversDict[ip].lower():
+            return ip
+
+    return inStr
+    
 
 
 

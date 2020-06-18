@@ -6,22 +6,32 @@ import re
 from urllib.request import urlopen
 import server.config as cfg
 
+def saveRoomName(name):
+    file = open(cfg.roomNamePath, 'w')
+    file.write(name)
+    file.close()
+    
+
 def getRoomName():
     try:
         file = open(cfg.roomNamePath, 'r')
-
         name = file.readline()
+        
+        
         if not name:
             file = open(cfg.roomNamePath, 'w')
             name = input("What Would You Like To Name This Chat Room: ")
             file.write(name)
 
+        file.close()
+
     except IOError:
-        file = open(cfg.roomNamePath, 'w')
         name = input("What Would You Like To Name This Chat Room: ")
-        file.write(name)
+        saveRoomName(name)
+    
     print(f"Server Name: {name}")
     return name
+    
 
 
 #if 2 users have the same username, one joining is given a suffix

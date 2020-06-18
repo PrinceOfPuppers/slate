@@ -42,6 +42,7 @@ Commands:
     start                   -Launch Server
     close                   -Close Server
     info                    -Show Server Name and Network Details
+    rename [name]           -Change room name to [name]
 
     clients                 -Show Connected Clients Data
 
@@ -75,6 +76,7 @@ def loadCommands(server):
         "start": Operation(server.start),
         "close": Operation(server.close),
         "info": Operation(lambda: print(server)),
+        "rename": Operation(lambda name: server.setRoomName(name)),
 
         "clients": Operation(lambda: print("\n".join(str(client) for client in server.clients),"\n") ),
 
