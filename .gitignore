@@ -1,4 +1,4 @@
-server/roomName.txt
+server/data/roomName.txt
 server/data/server.db
 client/data/user.json
 client/data/servers.json
