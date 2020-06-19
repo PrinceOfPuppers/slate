@@ -12,6 +12,6 @@ sleepTime = 0.01
 
 noNameReplacement="Mr.NoName"
 
-roomNamePath = "server/roomName.txt"
+roomNamePath = "server/data/roomName.txt"
 
-dbPath = "server/server.db"
+dbPath = "server/data/server.db"

@@ -48,22 +48,24 @@ def getSaved(gui):
 
     except:
         file = open(cfg.userJsonPath, 'w')
-        username = gui.prompt("Whats Your Name?")
-
+        username = gui.prompt("Whats Your Name?",endChar="")
+        gui.addText(f"Hi {username}!",cfg.subTextColor)
 
         for i,color in enumerate(cfg.clientColors):
-            gui.addText(f"{i}: {color}",color)
-        
+            gui.addText(f"{i}: {color}",color,endChar="")
+        gui.addText("",endChar="")
+
         #loops until valid input
-        colorIndex = -1
-        while not (colorIndex in range(0,len(cfg.clientColors))):
-            colorIndex = gui.prompt("Whats Your Color (Enter Number)")
+        while True:
+            inStr = gui.prompt("Whats Your Color (Number)?",endChar="").strip()
             try:
-                colorIndex = int(colorIndex)
+                color = cfg.clientColors[int(inStr)]
+                break
             except:
+                gui.addText(f"{inStr} Isnt an Option",cfg.subTextColor)
                 continue
         
-        color = cfg.clientColors[colorIndex]
+        gui.addText(f"{color} Chosen",cfg.subTextColor)
 
         userDict = makeClientDataDict(0,username,color)
         json.dump(userDict,file)

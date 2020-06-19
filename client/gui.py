@@ -53,7 +53,10 @@ class Gui:
         for color in cfg.colors.keys():
             messages.tag_config(color, foreground=cfg.colors[color])
             sidePanel.tag_config(color, foreground=cfg.colors[color])
-    
+
+        #configure indent tag
+        messages.tag_config("indent",lmargin1=3*self.fontSize,lmargin2=3*self.fontSize)
+
         self.window=window
         self.window.bind()
         self.messages=messages
@@ -79,13 +82,12 @@ class Gui:
         clientId = clientDict["id"]
 
         self.messages.configure(state='normal')
-        if clientId == self.lastMessanger:
-            self.messages.insert(tk.END,message+"\n")
-        
-        else:
+
+        if clientId != self.lastMessanger:
             self.lastMessanger = clientId
-            self.messages.insert(tk.END,f"\n{username}", color)
-            self.messages.insert(tk.END,f"> {message}\n")
+            self.messages.insert(tk.END,f"\n{username}:\n", color)
+
+        self.messages.insert(tk.END,f"{message}\n","indent")
         self.messages.configure(state='disabled')
 
         self.messages.see(tk.END)
@@ -93,11 +95,11 @@ class Gui:
 
 
     #username is simply for api compatibility
-    def addText(self,text,color=cfg.textColor):
+    def addText(self,text,color=cfg.textColor,endChar="\n"):
         self.lastMessanger=-1
 
         self.messages.configure(state='normal')
-        self.messages.insert(tk.END,f"\n{text}\n", color)
+        self.messages.insert(tk.END,f"\n{text}{endChar}", color)
         self.messages.configure(state='disabled')
 
         self.messages.see(tk.END)
@@ -149,8 +151,8 @@ class Gui:
             self.sendToClient(text)
 
 
-    def prompt(self,text,eventQueue=None,color=cfg.textColor):
-        self.addText(text,color)
+    def prompt(self,text,eventQueue=None,color=cfg.textColor,endChar="\n"):
+        self.addText(text,color,endChar)
         self.prompting = True
         
         #made true if application was closed during prompt

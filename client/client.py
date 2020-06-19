@@ -66,13 +66,13 @@ class Client:
 
     def connect(self):
         while self.running:
-            inStr = self.gui.prompt("What IP Would You Like to Connect to? ",self.eventQueue)
+            inStr = self.gui.prompt("What IP Would You Like to Connect to? ",self.eventQueue,endChar="")
             ip = getIpFromStr(self.servers.dict,inStr)
             if not self.running:
                 break
             try:
 
-                self.gui.addText("Attempting to Connect...")
+                self.gui.addText("Attempting to Connect...",cfg.subTextColor)
                 self.gui.tkRoot.update()
                 sock = startSocket(ip)
                 self.sock = sockWrapper(sock,cfg.bufferSize)

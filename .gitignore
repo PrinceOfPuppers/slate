@@ -1,5 +1,5 @@
 server/roomName.txt
-server/server.db
+server/data/server.db
 client/data/user.json
 client/data/servers.json
 server/__pycache__

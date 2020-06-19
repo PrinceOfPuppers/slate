@@ -6,7 +6,7 @@ from packets.packets import PType,sockWrapper
 from server.helpers import startServer, saveRoomName,getRoomName,ensureUniqueUsername
 from server.structures import ClientData
 import server.threads as threads
-from server.dbWrapper import DbWrapper
+from server.data.dbWrapper import DbWrapper
 import server.config as cfg
 
 
@@ -120,7 +120,7 @@ class Server:
             newClient = ClientData(sockWrap,ip,clientDataDict)
 
             self.clients.append(newClient)
-            message = f"> {clientUsername} Joined {self.roomName}"
+            message = f"{clientUsername} Joined {self.roomName}"
 
             #logs message and client connection
             self.db.addToQueue(self.db.msgTable.put,("Server",-1,message))
